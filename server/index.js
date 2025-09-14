@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+// JWT
+const jwt = require('jsonwebtoken');
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +33,14 @@ async function run() {
     const db = client.db('jobPortal');
     jobsCollection = db.collection('job');
     jobApplicationCollection = db.collection('job_applications');
+
+    // jwt token related api
+    app.post('/jwt',async(req,res)=>{
+      const {email} = req.body;
+      const user = {email}
+      const token = jwt.sign(user,'secret',{expiresIn:'1h'});
+      res.send({token})
+    })
 
 
     // only define routes after connection is established
