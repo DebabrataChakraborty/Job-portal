@@ -8,7 +8,9 @@ const MyApplications = () => {
     useEffect(() => {
         if (!user?.email) return;
 
-        fetch(`http://localhost:3000/job-application?email=${user.email}`)
+        fetch(`http://localhost:3000/job-application?email=${user.email}`,{
+            credentials:'include'
+        })
             .then(res => res.json())
             .then(data => {
                 console.log("Fetched data:", data);

@@ -2,17 +2,31 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
 // JWT
 const jwt = require('jsonwebtoken');
 
+
 app.use(cors({
-  origin:['http://localhost:5173'],
+    origin : 'http://localhost:5173',
   credentials:true
 }));
 app.use(express.json());
+app.use(cookieParser());
+
+const logger = (req,res,next) =>{
+  console.log('inside the logger middleware');
+  next();
+}
+const verifyToken = (req,res,next) =>{
+  const token = req?.cookies?.token;
+  console.log('cookie in the middleware', req.cookies);
+
+  next();
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.hjcgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -39,10 +53,18 @@ async function run() {
 
     // jwt token related api
     app.post('/jwt',async(req,res)=>{
-      const {email} = req.body;
-      const user = {email}
-      const token = jwt.sign(user,process.env.JWT_ACCESS_SECRET,{expiresIn:'1h'});
-      res.send({token})
+      const userData = req.body;
+      const token = jwt.sign(userData,process.env.JWT_ACCESS_SECRET,{expiresIn:'1h'});
+
+      // set token in the cookies
+      res.cookie('token',token,{
+        httpOnly: true,
+        secure:false,
+        sameSite: 'lax',
+      });
+
+
+      res.send({success:true,token})
     })
 
 
@@ -101,8 +123,9 @@ async function run() {
 
     })
 
-    app.get('/job-application', async (req, res) => {
+    app.get('/job-application',logger,verifyToken, async (req, res) => {
       const email = req.query.email;
+      // console.log('inside application api',req.cookies)
 
       try {
     
